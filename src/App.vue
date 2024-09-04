@@ -1,27 +1,65 @@
 <template>
-  <img alt="Vue logo" src="./assets/logo.png">
-  <HelloWorld msg="Welcome to Your Vue.js + TypeScript App"/>
+  <info-bar-vue @start="start()" :completed="completed" :best="best"/>
+  <div class="main">
+        <div class="title">
+            Easy Demon Race
+        </div>
+        <div class="demons-container">
+            <demon-card-vue
+                v-for="(demon, i) in demonList"
+                :key="i"
+                :position="i + 1"
+                :demon="demon"
+                @next="next()"
+            />
+        </div>
+    </div>
 </template>
 
 <script lang="ts">
-import { Options, Vue } from 'vue-class-component';
-import HelloWorld from './components/HelloWorld.vue';
+import { defineComponent } from 'vue'
+import DemonCardVue from './components/DemonCard/DemonCard.vue'
+import InfoBarVue from './components/InfoBar/InfoBar.vue'
+import Demon from './utils/Demon'
+import getRandomDemon from './utils/getDemon'
 
-@Options({
-  components: {
-    HelloWorld,
-  },
+export default defineComponent({
+    components: { InfoBarVue, DemonCardVue },
+    data() {
+        return {
+            demonList: [] as Demon[],
+            completed: 0,
+            best: 0
+        }
+    },
+    methods: {
+        async start() {
+            this.demonList = []
+            await this.getDemon()
+        },
+        async getDemon() {
+            const demon = await getRandomDemon()
+            if(!demon) {
+                window.alert("Rate limited! Please wait a second")
+                this.getDemon()
+                return
+            }
+            this.demonList.push(demon)
+        },
+
+        async next() {
+            this.completed++
+            await this.getDemon()
+            if(this.completed > this.best) this.best = this.completed
+        }
+    },
+    mounted() {
+        this.best = localStorage.getItem('best') ? parseInt(localStorage.getItem('best') as string) : 0
+    }
 })
-export default class App extends Vue {}
 </script>
 
+
 <style>
-#app {
-  font-family: Avenir, Helvetica, Arial, sans-serif;
-  -webkit-font-smoothing: antialiased;
-  -moz-osx-font-smoothing: grayscale;
-  text-align: center;
-  color: #2c3e50;
-  margin-top: 60px;
-}
+@import url("./assets/main.css");
 </style>
